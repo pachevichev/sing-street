@@ -268,7 +268,7 @@ textarea{width:100%;box-sizing:border-box;height:120px;background:var(--panel);c
 <script>
 /* loading progress: stream-count fetch bytes, count images when they finish; preload the song early */
 (function(){
-  const SIZES={"voice.b64.txt": 244664, "cats.mp3": 623639, "voice.json": 2758, "piano.mp3": 623639, "portraits/p1.png": 748621, "portraits/p2.png": 385264, "portraits/p0.png": 380706, "mouths/tuxedo_A.png": 103105, "mouths/tuxedo_O.png": 40904, "mouths/ginger_E.png": 112420, "mouths/ginger_O.png": 62482, "mouths/ginger_A.png": 180867, "mouths/persian_E.png": 76721, "mouths/persian_O.png": 28909, "mouths/tuxedo_E.png": 59528, "mouths/siamese_A.png": 125337, "mouths/persian_A.png": 124399, "mouths/siamese_O.png": 64723, "mouths/siamese_E.png": 145745, "models/ginger.b64.txt": 232048, "models/tuxedo.b64.txt": 179832, "models/mic.b64.txt": 96028, "models/persian.b64.txt": 172328, "models/siamese.b64.txt": 186584, "models/stool.b64.txt": 96536},TOTAL=Object.values(SIZES).reduce((a,b)=>a+b,0),got={};
+  const SIZES={"voice.b64.txt": 244664, "cats.mp3": 623639, "voice.json": 2758, "piano.mp3": 623639, "p1.png": 748621, "p2.png": 385264, "p0.png": 380706, "tuxedo_A.png": 103105, "tuxedo_O.png": 40904, "ginger_E.png": 112420, "ginger_O.png": 62482, "ginger_A.png": 180867, "persian_E.png": 76721, "persian_O.png": 28909, "tuxedo_E.png": 59528, "siamese_A.png": 125337, "persian_A.png": 124399, "siamese_O.png": 64723, "siamese_E.png": 145745, "ginger.b64.txt": 232048, "tuxedo.b64.txt": 179832, "mic.b64.txt": 96028, "persian.b64.txt": 172328, "siamese.b64.txt": 186584, "stool.b64.txt": 96536},TOTAL=Object.values(SIZES).reduce((a,b)=>a+b,0),got={};
   const key=u=>{try{const p=new URL(u,location.href).pathname;for(const k in SIZES)if(p.endsWith('/'+k)||p===k)return k}catch(e){}return null};
   const of=window.fetch.bind(window);
   window.fetch=async(input,init)=>{const url=typeof input==='string'?input:input.url,k=key(url);const r=await of(input,init);
@@ -534,7 +534,7 @@ function catDoodle(g,R,cx,cy,s,ink,accent,variant){
   if(variant===4){stroke(g,R,[[cx-s*.3,cy+s*.3],[cx-s*.55,cy+s*.75],[cx-s*.45,cy+s*.98],[cx-s*.25,cy+s*.9]],brush*.55,ink)} // sax
 }
 const PORTRAITS=[];
-const portraitsReady=Promise.all([0,1,2].map(i=>new Promise(r=>{const im=new Image();im.onload=()=>{PORTRAITS[i]=im;r()};im.onerror=()=>r();im.src='portraits/p'+i+'.png'})));
+const portraitsReady=Promise.all([0,1,2].map(i=>new Promise(r=>{const im=new Image();im.onload=()=>{PORTRAITS[i]=im;r()};im.onerror=()=>r();im.src='p'+i+'.png'})));
 function drawPortrait(g,R,i,cx,yy,fh,I,sx){
   const K=I.ink,P=I.paper,lw=I.stroke,im=PORTRAITS.length?PORTRAITS[i%PORTRAITS.length]:null;
   if(!im){const fw=fh*.8;rectStroke(g,R,cx-fw/2,yy,fw,fh,lw*I.frameLine,K);catDoodle(g,R,cx,yy+fh*.42,fw*.38,K,I.accent,i%5);return}
@@ -699,10 +699,10 @@ function loadTex(url){return new Promise((res,rej)=>texLoader.load(url,t=>res(ne
 
 let stool=null,mic=null;
 async function initCats(){
-  const sg=await loadGLB('models/stool.b64.txt');let sm=null;sg.scene.traverse(o=>{if(o.isMesh&&!sm)sm=o});
+  const sg=await loadGLB('stool.b64.txt');let sm=null;sg.scene.traverse(o=>{if(o.isMesh&&!sm)sm=o});
   const sb=new THREE.Box3().setFromBufferAttribute(sm.geometry.attributes.position);
   stool={geo:sm.geometry,mats:matSet(nearest(sm.material.map)),minY:sb.min.y,maxY:sb.max.y};
-  const mg=await loadGLB('models/mic.b64.txt');let mm=null;mg.scene.traverse(o=>{if(o.isMesh&&!mm)mm=o});
+  const mg=await loadGLB('mic.b64.txt');let mm=null;mg.scene.traverse(o=>{if(o.isMesh&&!mm)mm=o});
   const mb=new THREE.Box3().setFromBufferAttribute(mm.geometry.attributes.position);
   mic={geo:mm.geometry,mats:matSet(nearest(mm.material.map)),box:mb};
   tris+=(mm.geometry.index?mm.geometry.index.count/3:mm.geometry.attributes.position.count/3);
@@ -710,7 +710,7 @@ async function initCats(){
   const ms=new THREE.Mesh(new THREE.PlaneGeometry(.45,.45),new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false}));ms.rotation.x=-Math.PI/2;ms.position.y=.004;mic.g.add(ms);mic.shadow=ms;applyMic();
   tris+=4*(sm.geometry.index?sm.geometry.index.count/3:sm.geometry.attributes.position.count/3);
   await Promise.all(CATS.map(async(def,i)=>{
-    const [gltf,...mt]=await Promise.all([loadGLB(`models/${def.id}.b64.txt`),...['O','E','A'].map(m=>loadTex(`mouths/${def.id}_${m}.png`))]);
+    const [gltf,...mt]=await Promise.all([loadGLB(`${def.id}.b64.txt`),...['O','E','A'].map(m=>loadTex(`${def.id}_${m}.png`))]);
     let mesh=null;gltf.scene.traverse(o=>{if(o.isMesh&&!mesh)mesh=o});
     const map=nearest(mesh.material.map);
     const mats=matSet(map);for(const k in mats)mats[k].userData.pitUse=PIT_ON;mesh.material=mats.smooth;
