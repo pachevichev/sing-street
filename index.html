@@ -74,6 +74,12 @@ textarea{width:100%;box-sizing:border-box;height:120px;background:var(--panel);c
 #gcv{position:absolute;left:3%;top:24%;width:clamp(200px,22%,380px);height:63%;display:block;touch-action:none;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 var(--fade,22%));mask-image:linear-gradient(to bottom,transparent 0,#000 var(--fade,22%))}
 #pauseBtn{display:none!important}
 #loading{display:none!important}
+html,body{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+@media (max-width:820px){body{overflow:hidden!important}#app{grid-template-rows:1fr!important;height:100%!important;min-height:0!important}}
+@media (max-aspect-ratio:9/10){
+  #gcv{left:0!important;top:44%!important;width:100%!important;height:56%!important}
+  #lookBtn{bottom:auto!important;right:auto!important;left:50%!important;transform:translateX(-50%)!important;top:calc(18px + env(safe-area-inset-top,0px))!important}
+}
 #loading.err{display:flex!important;z-index:20}
 #hcv{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:9}
 #blackout{position:absolute;inset:0;z-index:8;background:#000;opacity:0;pointer-events:none;transition:opacity .4s ease}
@@ -1475,6 +1481,19 @@ function bannerState(){
   return {text:'',k:0}}
 
 /* ---- layout ---- */
+const isMob=()=>{const r=$('view').getBoundingClientRect();return r.height>0&&r.width/r.height<.9};
+let camBase=null,camMob=false;
+function mobileCam(){if(!modelsReady||S.scene.bg!=='room')return;const cv=$('cv'),r=cv.getBoundingClientRect();if(!r.width)return;
+  if(!camBase)camBase={pos:camera.position.clone(),tgt:controls.target.clone(),fov:S.cam.fov};
+  const m=isMob();
+  if(!m){if(camMob){camMob=false;camera.clearViewOffset();camera.position.copy(camBase.pos);controls.target.copy(camBase.tgt);S.cam.fov=camBase.fov;camera.fov=camBase.fov;if(scene.fog){scene.fog.near=S.fx.fogNear;scene.fog.far=S.fx.fogFar}camera.aspect=r.width/r.height;camera.updateProjectionMatrix()}return}
+  // portrait: cats in the top part of the screen, the floor runs on under the notes
+  camMob=true;const w=r.width,h=r.height,F=1.35,V=70,asp=w/(F*h),half=1.6;
+  const tanH=Math.tan(D2R(V/2))*asp,dist=half/tanH;
+  const T=new THREE.Vector3(.1,.72,.12),d=camBase.pos.clone().sub(camBase.tgt).normalize();
+  camera.position.copy(T).addScaledVector(d,dist);controls.target.copy(T);
+  if(scene.fog&&S.fx.fog){const ex=Math.max(0,dist-6.33);scene.fog.near=S.fx.fogNear+ex;scene.fog.far=S.fx.fogFar+ex}
+  S.cam.fov=V;camera.fov=V;camera.aspect=asp;camera.setViewOffset(w,F*h,0,F*h/2-.25*h,w,h);camera.updateProjectionMatrix()}
 function resizeGame(){
   for(const [cv,r,cam] of [[gcv,gr,gcam],[hcv,hr,hcam]]){const b=cv.getBoundingClientRect();if(!b.width||!b.height)continue;r.setPixelRatio(Math.min(2,devicePixelRatio||1));r.setSize(b.width,b.height,false);cam.aspect=b.width/b.height;cam.updateProjectionMatrix()}
   // fit 4 lanes to the strip width, then stretch the travel to fill its height
@@ -1486,7 +1505,7 @@ function resizeGame(){
 new ResizeObserver(resizeGame).observe(gcv);new ResizeObserver(resizeGame).observe(hcv);resizeGame();
 const gclock=new THREE.Clock();
 let gclock_dt=0;
-function gameFrame(){requestAnimationFrame(gameFrame);gclock_dt=Math.min(.25,gclock.getDelta());const dt=Math.min(.05,gclock_dt),t=gclock.elapsedTime;
+function gameFrame(){requestAnimationFrame(gameFrame);mobileCam();gclock_dt=Math.min(.25,gclock.getDelta());const dt=Math.min(.05,gclock_dt),t=gclock.elapsedTime;
   update(dt);animFx(paused?0:dt);
   const hh=Math.tan(D2R(hcam.fov/2))*60,hw=hh*hcam.aspect;
   const showScore=phase==='play'||phase==='count'||phase==='curtain';
@@ -1502,14 +1521,17 @@ function gameFrame(){requestAnimationFrame(gameFrame);gclock_dt=Math.min(.25,gcl
   const bsc=Math.min(.5,hw*2*.6/Math.max(bannerLine.w,1));
   const live=phase==='play'||phase==='count';pauseLine.set(paused?'▶':'❚');
   scoreLine.anim(dt,t);bannerLine.anim(dt,t);pauseLine.anim(dt,t);
-  const stopY=toY(sb.top);scoreLine.place(toX(sb.left)+scoreLine.w*ssc/2,Math.min(hh-5*ssc-hh*.015,stopY+5*ssc+hh*.12),ssc,-8,-4,showScore&&b.k<.05?1:0,34);
-  const psc=Math.min(.2,hh*.12/10);pauseBtn3d.sc=psc;pauseLine.place(hw-4*psc-hh*.08,hh-5*psc-hh*.08,psc,-8,6,live?1+pauseBtn3d.hov*.12:0,-14);
+  const stopY=toY(sb.top),MOB=isMob();
+  if(MOB){const ms=Math.min(.2,hw*2*.42/Math.max(scoreLine.w,4*6+3*HP.spacing*6));scoreLine.place(-hw+hw*.06+scoreLine.w*ms/2,hh-5*ms-hh*.05,ms,-8,-4,showScore&&b.k<.05?1:0,30)}
+  else scoreLine.place(toX(sb.left)+scoreLine.w*ssc/2,Math.min(hh-5*ssc-hh*.015,stopY+5*ssc+hh*.12),ssc,-8,-4,showScore&&b.k<.05?1:0,34);
+  const psc=MOB?Math.min(.2,hw*2*.1/8):Math.min(.2,hh*.12/10);pauseBtn3d.sc=psc;pauseLine.place(hw-4*psc-hh*.08,hh-5*psc-hh*.08,psc,-8,6,live?1+pauseBtn3d.hov*.12:0,-14);
   bannerLine.place(hw*.12,hh*.3,bsc,-10,-4,b.k);
   // title: big ИГРАТЬ where the score lives
   {const tk=phase==='title'?1:0;playLine.k=(playLine.k||0)+(tk-(playLine.k||0))*Math.min(1,dt*6);playSat+=((playHov?1:.65)-playSat)*Math.min(1,dt*10);
     for(const k of ['face','side','out']){const c=new THREE.Color(k==='face'?HP.face:k==='side'?HP.side:HP.outCol);pbMats[k].color.copy(_gry(c)).lerp(c,playSat)}pbMats.glow.color.copy(pbMats.out.color);
     const psc2=Math.min(.5,stripW*1.15/playLine.w),bob=Math.sin(t*1.6)*hh*.012;playLine.anim(dt,t);
-    playLine.place(toX(sb.left)+playLine.w*psc2/2,Math.min(hh-5*psc2-hh*.03,stopY+5*psc2+hh*.1)+bob,psc2,-8,-4,playLine.k<.01?0:playLine.k*(1+playHov*.06+Math.sin(t*3)*.015),34)}
+    const pmob=MOB?Math.min(.4,hw*2*.7/playLine.w):psc2;
+    playLine.place(MOB?0:toX(sb.left)+playLine.w*psc2/2,MOB?(toY(sb.top)+toY(sb.bottom))/2+bob:Math.min(hh-5*psc2-hh*.03,stopY+5*psc2+hh*.1)+bob,pmob,-8,-4,playLine.k<.01?0:playLine.k*(1+playHov*.06+Math.sin(t*3)*.015),MOB?0:34)}
   {const lk=phase==='loading'?1:0;loadLine.k=(loadLine.k??1)+(lk-(loadLine.k??1))*Math.min(1,dt*6);loadLine.anim(dt,t);const lsc=Math.min(.6,hw*2*.32/Math.max(loadLine.w,20));loadLine.place(0,0,lsc,-8,-3,loadLine.k<.01?0:loadLine.k,0)}
   // results: black screen, score + record, ЗАКРЫТЬ like the menu items
   {resK+=((resOpen?1:0)-resK)*Math.min(1,dt*7);const rk=resK<.01?0:resK;closeSat+=((closeHov?1:.4)-closeSat)*Math.min(1,dt*10);tint(closeMats,closeSat);tint(bestMats,newRec?1:.6);
