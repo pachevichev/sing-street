@@ -1242,7 +1242,8 @@ const LTR={ // HUD letters: shapes = list of [outer, ...holes]
  'К':{w:6.3,s:[[[[0,0],[2.2,0],[2.2,3.6],[2.9,4.4],[4,0],[6.3,0],[4.4,6],[6.2,10],[3.8,10],[2.2,6.6],[2.2,10],[0,10]]]]},
  'П':{w:6,s:[[[[0,0],[2.2,0],[2.2,8],[3.8,8],[3.8,0],[6,0],[6,10],[0,10]]]]},
  'Р':{w:6,s:[[[[0,0],[2.2,0],[2.2,4],[4.8,4],[6,5.2],[6,8.8],[4.8,10],[0,10]],[[2.2,6],[3.6,6],[3.8,6.4],[3.8,7.6],[3.6,8],[2.2,8]]]]},
- 'Л':{w:6,s:[[[[0,0],[1.4,0],[2.4,1.4],[2.6,8],[3.8,8],[3.8,0],[6,0],[6,10],[0.8,10],[0.6,2.4],[0,2.2]]]]},
+ 'Л':{w:6,s:[[[[0,0],[1.9,0],[3.1,7.8],[3.8,7.8],[3.8,0],[6,0],[6,10],[1.3,10]]]]},
+ 'Ч':{w:6,s:[[[[3.8,0],[6,0],[6,10],[3.8,10],[3.8,6.2],[2.2,6.2],[2.2,10],[0,10],[0,5.6],[1.2,4.2],[3.8,4.2]]]]},
  'Ж':{w:9,s:[[[[3.6,0],[5.4,0],[5.4,10],[3.6,10]]],[[[0,0],[2.2,0],[3.8,4.2],[3.8,5.8],[2.2,10],[0,10],[1.8,5]]],[[[9,0],[6.8,0],[5.2,4.2],[5.2,5.8],[6.8,10],[9,10],[7.2,5]]]]},
  'И':{w:6,s:[[[[0,0],[2.2,0],[3.8,6],[3.8,0],[6,0],[6,10],[3.8,10],[2.2,4],[2.2,10],[0,10]]]]},
  'Т':{w:6.2,s:[[[[2,0],[4.2,0],[4.2,8],[6.2,8],[6.2,10],[0,10],[0,8],[2,8]]]]},
@@ -1251,6 +1252,7 @@ const LTR={ // HUD letters: shapes = list of [outer, ...holes]
  'Ю':{w:8.2,s:[[[[0,0],[2,0],[2,4],[3.2,4],[3.2,6],[2,6],[2,10],[0,10]]],[[[4.2,0],[7.2,0],[8.2,1.2],[8.2,8.8],[7.2,10],[4.2,10],[3,8.8],[3,1.2]],[[4.8,2.2],[6.4,2.2],[6.5,7.8],[4.7,7.8]]]]},
  '▶':{w:8,s:[[[[0,0.5],[0.8,0],[8,4.4],[8,5.6],[0.8,10],[0,9.5]]]]},
  '❚':{w:8,s:[[[[0,0],[3,0],[3,10],[0,10]]],[[[5,0],[8,0],[8,10],[5,10]]]]},
+ 'ˇ':{w:9,s:[[[[0,8.4],[2.5,8.4],[4.5,4.8],[6.5,8.4],[9,8.4],[4.5,1.4]]]]},
  '‹':{w:6.4,s:[[[[0,5],[4,10],[6.4,10],[2.6,5],[6.4,0],[4,0]]]]},
  '›':{w:6.4,s:[[[[6.4,5],[2.4,10],[0,10],[3.8,5],[0,0],[2.4,0]]]]},
  'Я':{w:6,s:[[[[6,0],[3.8,0],[3.8,4],[1.2,4],[0,5.2],[0,8.8],[1.2,10],[6,10]],[[3.8,6],[2.4,6],[2.2,6.4],[2.2,7.6],[2.4,8],[3.8,8]]],[[[0,0],[2.3,0],[3.4,3.4],[2.6,4.6],[1.2,4.2]]]]},
@@ -1360,7 +1362,8 @@ const playLine=new Line3D(hs,pbMats);playLine.set('ИГРАТЬ');
 // song picker: ‹ TITLE › in the same 3D letters, no backing
 const mkM=()=>{const m={face:hFace.clone(),side:hSide.clone(),out:hOut.clone(),glow:hGlow.clone()};m.out.onBeforeCompile=hOut.onBeforeCompile;m.glow.onBeforeCompile=hGlow.onBeforeCompile;return m};
 const pick={title:new Line3D(hs,mkM()),prev:new Line3D(hs,mkM()),next:new Line3D(hs,mkM()),hov:'',k:0,sat:{title:.65,prev:.65,next:.65}};
-pick.prev.set('‹');pick.next.set('›');const loadLine=new Line3D(menuScene);
+pick.prev.set('‹');pick.next.set('ˇ');pick.prev.root.visible=false;
+const songItems=[];let songMenuOpen=false,songBusy=false,songK=0,songSel=-1;const loadLine=new Line3D(menuScene);
 const mkMats=()=>{const m={face:hFace.clone(),side:hSide.clone(),out:hOut.clone(),glow:hGlow.clone()};m.out.onBeforeCompile=hOut.onBeforeCompile;m.glow.onBeforeCompile=hGlow.onBeforeCompile;return m};
 const tint=(mats,sat)=>{for(const k of ['face','side','out']){const c=new THREE.Color(k==='face'?HP.face:k==='side'?HP.side:HP.outCol);mats[k].color.copy(_gry(c)).lerp(c,sat)}mats.glow.color.copy(mats.out.color);mats.glow.opacity=HP.outOp*.35*sat};
 const resScore=new Line3D(menuScene),bestMats=mkMats(),resBest=new Line3D(menuScene,bestMats),closeMats=mkMats(),resClose=new Line3D(menuScene,closeMats);resClose.set('ЗАКРЫТЬ');
@@ -1404,7 +1407,7 @@ function loadSongAudio(S,onProg){initAudio();if(bufs[S.id]&&bufs[S.id].ready)ret
   B.p=Promise.all([A.then(b=>ctx.decodeAudioData(b)),Bp.then(b=>ctx.decodeAudioData(b))]).then(([a,b])=>{B.cats=a;B.piano=b;B.ready=true;onProg&&onProg(1)}).catch(e=>{delete bufs[S.id];throw e});
   return B.p}
 function preloadSong(){return loadSongAudio(SONGLIST[0]).then(()=>{audioReady=true;if(curSong.id!=='hb')return loadSongAudio(curSong)})}
-preloadSong().then(()=>{audioReady=true}).catch(e=>{audioReady=true;console.error(e)});
+preloadSong().then(()=>{audioReady=true}).catch(e=>{audioReady=true;console.error(e);const L=$('loading');L.classList.add('err');L.textContent='Не загрузилась песня (cats_hb.mp3 / piano_hb.mp3). Проверьте, что mp3-файлы лежат в репозитории.'});
 // iOS: audio may only start from touchend/click; also keep the session in "playback" so the silent switch doesn't mute it
 let unlocked=false;
 function unlockAudio(){initAudio();try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
@@ -1418,7 +1421,7 @@ function setSong(S){if(!S||!(phase==='play'||phase==='count')||paused)return;cur
   stopAudio();chart.forEach(freeVis);chart=[];for(let i=0;i<4;i++){down[i]=false;targets[i].held=false}cats.forEach(c=>c&&setMouth(c,'closed'));
   if(bufs[S.id]&&bufs[S.id].ready){phase='switching';startRun();return}
   {songLoading={p:0,done:false,play:true};phase='loading';loadShown=0;$('blackout').classList.add('on');
-    loadSongAudio(S,p=>{if(songLoading)songLoading.p=p*100}).then(()=>{if(songLoading)songLoading.done=true}).catch(e=>{console.error(e);songLoading.done=true})}}
+    loadSongAudio(S,p=>{if(songLoading)songLoading.p=p*100}).then(()=>{if(songLoading)songLoading.done=true}).catch(e=>{console.error(e);const L=$('loading');L.classList.add('err');L.textContent='Не загрузилась песня: cats_'+S.id+'.mp3 / piano_'+S.id+'.mp3';if(songLoading)songLoading.done=true})}}
 function stepSong(d){const i=SONGLIST.indexOf(curSong);setSong(SONGLIST[(i+d+SONGLIST.length)%SONGLIST.length])}
 function syncSongUI(){pick.title.set(curSong.title);$('menuLive').textContent='Песня: '+curSong.title.toLowerCase();$('songName').firstChild.textContent=curSong.title;document.querySelectorAll('#songList button').forEach(b=>b.setAttribute('aria-current',b.dataset.id===curSong.id?'true':'false'))}
 $('songList').innerHTML=SONGLIST.map(S=>`<li><button data-id="${S.id}">${S.title}</button></li>`).join('');
@@ -1456,6 +1459,13 @@ function release(lane){if(!down[lane])return;down[lane]=false;targets[lane].held
 function completeHold(n){n.state='done';n.hk=0;score+=10;hits++;combo++;maxCombo=Math.max(maxCombo,combo);burst(n.lane,true)}
 const typing=e=>e.target&&e.target.matches&&e.target.matches('input[type=text],textarea');
 addEventListener('keydown',e=>{if(typing(e))return;
+  if(songMenuOpen){if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Enter'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation()}
+    if(e.repeat)return;const N=SONGLIST.length;
+    if(e.code==='ArrowDown'||e.code==='ArrowRight')songSel=(songSel+1+N)%N;
+    else if(e.code==='ArrowUp'||e.code==='ArrowLeft')songSel=songSel<0?N-1:(songSel-1+N)%N;
+    else if(e.code==='Enter'||e.code==='Space'){if(songSel>=0)chooseSong(SONGLIST[songSel])}
+    else if(e.code==='Escape'||e.code==='KeyP'){e.preventDefault();closeSongMenu(true)}
+    if(songSel>=0)$('menuLive').textContent=SONGLIST[songSel].title.toLowerCase();return}
   if(menuOpen){if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Enter'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation()}
     if(e.repeat)return;
     if(e.code==='ArrowDown'||e.code==='ArrowRight')menuSel=(menuSel+1+MENU.length)%MENU.length;
@@ -1483,11 +1493,15 @@ gcv.addEventListener('pointerdown',e=>{if(phase!=='play'&&phase!=='count')return
 const pup=e=>{const l=ptr.get(e.pointerId);if(l!==undefined){ptr.delete(e.pointerId);release(l)}};gcv.addEventListener('pointerup',pup);gcv.addEventListener('pointercancel',pup);
 
 let menuOpen=false,menuBusy=false,menuK=0,menuSel=-1;
-function setPause(on){if(!ctx||!(phase==='play'||phase==='count'))return;
+function setPause(on){if(!ctx||!(phase==='play'||phase==='count')||songMenuOpen)return;
   if(on){if(paused)return;paused=true;for(let i=0;i<4;i++)release(i);ctx.suspend();menuOpen=true;menuSel=-1;$('blackout').classList.add('on');$('menuLive').textContent='Пауза. Продолжить, заново или в меню.'}
   else closeMenu(()=>{paused=false;ctx.resume()});syncPause()}
 function closeMenu(after){if(!menuOpen||menuBusy)return;menuBusy=true;menuOpen=false;$('blackout').classList.remove('on');setTimeout(()=>{menuBusy=false;after()},420)}
-function togglePause(){if(menuOpen){setPause(false);return}if(phase==='play'||phase==='count')setPause(true)}
+function openSongMenu(){if(!ctx||!(phase==='play'||phase==='count')||paused)return;paused=true;for(let i=0;i<4;i++)release(i);ctx.suspend();songMenuOpen=true;songSel=-1;$('blackout').classList.add('on');$('menuLive').textContent='Выбор песни'}
+function closeSongMenu(resume,after){if(!songMenuOpen||songBusy)return;songBusy=true;songMenuOpen=false;$('blackout').classList.remove('on');
+  setTimeout(()=>{songBusy=false;paused=false;ctx.resume();after&&after()},420)}
+function chooseSong(S){if(S===curSong){closeSongMenu(true);return}closeSongMenu(false,()=>setSong(S))}
+function togglePause(){if(songMenuOpen){closeSongMenu(true);return}if(menuOpen){setPause(false);return}if(phase==='play'||phase==='count')setPause(true)}
 const MENU=[{label:'ПРОДОЛЖИТЬ',act:()=>setPause(false)},
   {label:'ЗАНОВО',act:()=>closeMenu(()=>{paused=false;if(ctx.state==='suspended')ctx.resume();startRun()})},
   {label:'В МЕНЮ',act:()=>closeMenu(()=>toMenu())}];
@@ -1580,7 +1594,7 @@ function gameFrame(){requestAnimationFrame(gameFrame);mobileCam();gclock_dt=Math
   const showScore=phase==='play'||phase==='count'||phase==='curtain';
   field.visible=phase!=='title'&&phase!=='loading';document.body.classList.toggle('playing',field.visible);
   // loading: black screen + 3D percent
-  if(phase==='loading'){const ok=songLoading?songLoading.done:(modelsReady&&audioReady);const raw=songLoading?songLoading.p:(window.__LP?window.__LP.pct():0);const tgt=Math.min(ok?100:99,raw);loadShown+=(Math.max(loadShown,tgt)-loadShown)*Math.min(1,dt*5);
+  if(phase==='loading'){const ok=songLoading?songLoading.done:(modelsReady&&audioReady);const raw=songLoading?songLoading.p:(window.__LP?window.__LP.pct():0);const tgt=ok?100:Math.min(99,raw);loadShown+=(Math.max(loadShown,tgt)-loadShown)*Math.min(1,dt*5);
     if(ok&&tgt>=100&&loadShown>99.4){loadShown=100;const go=songLoading&&songLoading.play;phase=go?'switching':'title';songLoading=null;$('blackout').classList.remove('on');if(go)startRun()}}
   document.body.classList.toggle('title',phase==='title');
   if((phase==='play'||phase==='count')&&!paused&&ctx&&ctx.state!=='running'&&ctx.state!=='closed')ctx.resume().catch(()=>{});
@@ -1595,14 +1609,15 @@ function gameFrame(){requestAnimationFrame(gameFrame);mobileCam();gclock_dt=Math
   const stopY=toY(sb.top),MOB=isMob();
   if(MOB){const ms=Math.min(.2,hw*2*.42/Math.max(scoreLine.w,4*6+3*HP.spacing*6));scoreLine.place(-hw+hw*.06+scoreLine.w*ms/2,hh-5*ms-hh*.05,ms,-8,-4,showScore&&b.k<.05?1:0,30)}
   else scoreLine.place(toX(sb.left)+scoreLine.w*ssc/2,Math.min(hh-5*ssc-hh*.015,stopY+5*ssc+hh*.12),ssc,-8,-4,showScore&&b.k<.05?1:0,34);
-  {const tk=(phase==='play'||phase==='count')&&!menuOpen&&menuK<.3?1:0;pick.k+=(tk-pick.k)*Math.min(1,dt*6);const pk=pick.k<.01?0:pick.k;
+  {const tk=(phase==='play'||phase==='count')&&!menuOpen&&!songMenuOpen&&menuK<.3&&songK<.3?1:0;pick.k+=(tk-pick.k)*Math.min(1,dt*6);const pk=pick.k<.01?0:pick.k;
     const ts=Math.min(MOB?.14:.13,hw*2*(MOB?.46:.26)/Math.max(pick.title.w,30)),cs=ts*1.15,half=pick.title.w*ts/2+7*cs,y=MOB?toY(sb.top-sb.height*.01):hh-6*ts-hh*.06;
-    for(const k of ['title','prev','next']){const on=pick.hov===k;pick.sat[k]+=((on?1:.65)-pick.sat[k])*Math.min(1,dt*10);
+    for(const k of ['title','prev','next']){const on=pick.hov==='title'||pick.hov==='next';pick.sat[k]+=((on?1:.65)-pick.sat[k])*Math.min(1,dt*10);
       const M=pick[k].mats;for(const c of ['face','side','out']){const base=new THREE.Color(c==='face'?HP.face:c==='side'?HP.side:HP.outCol);M[c].color.copy(_gry(base)).lerp(base,pick.sat[k])}M.glow.color.copy(M.out.color);pick[k].anim(dt,t+(k==='prev'?1:k==='next'?2:0))}
     const bob=Math.sin(t*1.4)*hh*.006;
-    pick.title.place(0,y+bob,ts,-8,-2,pk*(1+(pick.hov==='title'?.04:0)),0);
-    pick.prev.place(-half,y+bob,cs,-8,0,pk*(1+(pick.hov==='prev'?.12:0)),18);
-    pick.next.place(half,y+bob,cs,-8,0,pk*(1+(pick.hov==='next'?.12:0)),-18)}
+    const cw=9*cs,gap=3*cs,tw=pick.title.w*ts,x0=-(tw+gap+cw)/2;const hv=pick.hov==='title'||pick.hov==='next';
+    pick.title.place(x0+tw/2,y+bob,ts,-8,-2,pk*(1+(hv?.04:0)),0);
+    pick.prev.root.visible=false;
+    pick.next.place(x0+tw+gap+cw/2,y+bob+Math.sin(t*3)*hh*.004,cs,-8,0,pk*(1+(hv?.1:0)),0)}
   const psc=MOB?Math.min(.2,hw*2*.1/8):Math.min(.2,hh*.12/10);pauseBtn3d.sc=psc;pauseLine.place(hw-4*psc-hh*.08,hh-5*psc-hh*.08,psc,-8,6,live?1+pauseBtn3d.hov*.12:0,-14);
   bannerLine.place(0,0,bsc,-10,-4,b.k);
   // title: big ИГРАТЬ where the score lives
@@ -1630,9 +1645,19 @@ function gameFrame(){requestAnimationFrame(gameFrame);mobileCam();gclock_dt=Math
     for(const k of ['face','side','out']){const c=m.base[k];m.mats[k].color.copy(_gry(c)).lerp(c,m.sat)}m.mats.glow.color.copy(m.mats.out.color);m.mats.glow.opacity=HP.outOp*.35*m.sat;
     m.ln.anim(dt,t+i*1.7);const y=(1-i)*hh*.34*vf+Math.sin(t*1.1+i*2.1)*hh*.025,x=Math.sin(t*.7+i*1.3)*hw*.012;
     m.ln.place(x,y,msc,-8+Math.sin(t*.9+i)*3,Math.sin(t*.8+i*2.4)*2.5,mk*(1+m.hov*.08),Math.sin(t*.6+i)*6)});
+  // song list: black screen, all titles floating; current one bright, hovered one brightest
+  if(!songItems.length)SONGLIST.forEach((S,i)=>{const mats=mkM();const ln=new Line3D(menuScene,mats);ln.set(S.title);songItems.push({ln,mats,sat:.4,hov:0})});
+  songK+=((songMenuOpen?1:0)-songK)*Math.min(1,dt*7);
+  {const sk=songK<.01?0:songK,N=songItems.length,maxw=Math.max(...songItems.map(m=>m.ln.w));
+    const ss=Math.min(.17,hw*2*(MOB?.8:.5)/maxw,hh*2*.86/N/16),step=ss*16;
+    songItems.forEach((m,i)=>{const cur=SONGLIST[i]===curSong,on=i===songSel;m.sat+=((on?1:cur?.85:.4)-m.sat)*Math.min(1,dt*10);m.hov+=((on?1:0)-m.hov)*Math.min(1,dt*10);
+      for(const c of ['face','side','out']){const base=new THREE.Color(c==='face'?HP.face:c==='side'?HP.side:HP.outCol);m.mats[c].color.copy(_gry(base)).lerp(base,m.sat)}m.mats.glow.color.copy(m.mats.out.color);m.mats.glow.opacity=HP.outOp*.35*m.sat;
+      m.ln.anim(dt,t+i*1.3);const y=((N-1)/2-i)*step+Math.sin(t*1.1+i*2.1)*step*.06,x=Math.sin(t*.7+i*1.3)*hw*.01;
+      m.ln.place(x,y,ss,-8+Math.sin(t*.9+i)*2,Math.sin(t*.8+i*2.4)*2,sk*(1+m.hov*.08+(cur?.04:0)),Math.sin(t*.6+i)*5)})}
+  if(songK>.3){scoreLine.root.visible=pauseLine.root.visible=bannerLine.root.visible=pick.title.root.visible=pick.next.root.visible=false}
   if(menuK>.3){scoreLine.root.visible=pauseLine.root.visible=bannerLine.root.visible=pick.title.root.visible=pick.prev.root.visible=pick.next.root.visible=false}
   snapScene(gs,passN.snapU);snapScene(hs,passH.snapU);snapScene(htop,passH.snapU);snapScene(menuScene,passH.snapU);
-  passN.render([[gs,gcam]]);passH.render(mk||resK>.01||loadLine.k>.01?[[hs,hcam],[htop,hcam],[menuScene,hcam]]:[[hs,hcam],[htop,hcam]]);
+  passN.render([[gs,gcam]]);passH.render(mk||songK>.01||resK>.01||loadLine.k>.01?[[hs,hcam],[htop,hcam],[menuScene,hcam]]:[[hs,hcam],[htop,hcam]]);
 }
 const pauseBtn3d={sc:.2,hov:0};{const ray=new THREE.Raycaster(),m=new THREE.Vector2();
   const hit=e=>{if(!pauseLine.root.visible)return false;const r=hcv.getBoundingClientRect();m.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(m,hcam);return ray.intersectObject(pauseLine.root,true).length>0};
@@ -1641,9 +1666,12 @@ const pauseBtn3d={sc:.2,hov:0};{const ray=new THREE.Raycaster(),m=new THREE.Vect
   const menuHit=e=>{if(!menuOpen||menuK<.6)return -1;const r=hcv.getBoundingClientRect();m.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(m,hcam);
     for(let i=0;i<menuItems.length;i++){box.setFromObject(menuItems[i].ln.root);box.expandByScalar(.6);if(ray.ray.intersectsBox(box))return i}return -1};
   const pickHit=e=>{if(!(phase==='play'||phase==='count')||paused||menuOpen||pick.k<.6)return '';const r=hcv.getBoundingClientRect();m.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(m,hcam);
-    for(const k of ['prev','next','title']){box.setFromObject(pick[k].root);box.expandByScalar(k==='title'?.4:1.4);if(ray.ray.intersectsBox(box))return k}return ''};
-  addEventListener('pointerdown',e=>{const k=pickHit(e);if(!k)return;e.preventDefault();e.stopPropagation();const L=k==='prev'?pick.prev:pick.next;
-    if(k!=='title'){L.slots.forEach(s=>s.pop=1);stepSong(k==='prev'?-1:1)}else stepSong(1)},{capture:true});
+    for(const k of ['next','title']){box.setFromObject(pick[k].root);box.expandByScalar(k==='title'?.4:1.4);if(ray.ray.intersectsBox(box))return k}return ''};
+  addEventListener('pointerdown',e=>{const k=pickHit(e);if(!k)return;e.preventDefault();e.stopPropagation();pick.next.slots.forEach(s=>s.pop=1);openSongMenu()},{capture:true});
+  const songHit=e=>{if(!songMenuOpen||songK<.6)return -1;const r=hcv.getBoundingClientRect();m.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(m,hcam);
+    for(let i=0;i<songItems.length;i++){box.setFromObject(songItems[i].ln.root);box.expandByScalar(.35);if(ray.ray.intersectsBox(box))return i}return -1};
+  addEventListener('pointerdown',e=>{if(!songMenuOpen)return;e.preventDefault();e.stopPropagation();const i=songHit(e);if(i>=0){songSel=i;chooseSong(SONGLIST[i])}else if(songK>.6)closeSongMenu(true)},{capture:true});
+  addEventListener('pointermove',e=>{if(!songMenuOpen)return;const i=songHit(e);songSel=i;document.body.style.cursor=i>=0?'pointer':''},{capture:true});
   const playHit=e=>{if(phase!=='title'||!playLine.root.visible)return false;const r=hcv.getBoundingClientRect();m.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(m,hcam);box.setFromObject(playLine.root);box.expandByScalar(.6);return ray.ray.intersectsBox(box)};
   addEventListener('pointerdown',e=>{if(playHit(e)){e.preventDefault();e.stopPropagation();playLine.slots.forEach(s=>s.pop=1);startRun()}},{capture:true});
   const closeHit=e=>{if(!resOpen||resK<.6)return false;const r=hcv.getBoundingClientRect();m.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(m,hcam);box.setFromObject(resClose.root);box.expandByScalar(.6);return ray.ray.intersectsBox(box)};
